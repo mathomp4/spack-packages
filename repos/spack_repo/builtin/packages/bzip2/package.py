@@ -83,10 +83,12 @@ class Bzip2(Package, SourcewarePackage):
         if self.spec.satisfies("platform=windows"):
             return
 
-        # bzip2 comes with two separate Makefiles for static and dynamic builds
-        # Tell both to use Spack's compiler wrapper instead of GCC
-        filter_file(r"^CC=gcc", "CC={0}".format(spack_cc), "Makefile")
-        filter_file(r"^CC=gcc", "CC={0}".format(spack_cc), "Makefile-libbz2_so")
+        # bzip2 comes with two separate Makefiles for static and dynamic builds.
+        # Tell both to use the configured C compiler instead of GCC. `spack_cc`
+        # is no longer injected as a package-module global during this phase.
+        cc = self.compiler.cc
+        filter_file(r"^CC=gcc", "CC={0}".format(cc), "Makefile")
+        filter_file(r"^CC=gcc", "CC={0}".format(cc), "Makefile-libbz2_so")
 
         # The Makefiles use GCC flags that are incompatible with PGI
         if self.spec.satisfies("%nvhpc@:20.11"):
