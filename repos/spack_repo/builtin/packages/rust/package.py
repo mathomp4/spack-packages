@@ -207,7 +207,7 @@ class Rust(Package):
         # Respect an explicitly configured Cargo cache for offline builds.
         # Otherwise retain Spack's isolated per-package cache.
         cargo_home = os.environ.get("CARGO_HOME")
-        cargo_offline = os.environ.get("CARGO_NET_OFFLINE", "").lower() == "true"
+        cargo_offline = os.environ.get("CARGO_NET_OFFLINE", "") == "true"
         if not (cargo_home and cargo_offline):
             env.set("CARGO_HOME", join_path(dependent_spec.package.stage.path, "cargo"))
 
