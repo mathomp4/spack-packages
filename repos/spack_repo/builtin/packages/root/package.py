@@ -445,7 +445,7 @@ class Root(CMakePackage):
     # (interpreter/llvm-project/clang) and builds it against the external LLVM, so
     # vanilla LLVM is sufficient here.  ROOT's patches to llvm-project only touch
     # clang/, not the LLVM core.
-    depends_on("llvm@20.1.0:20.1", when="@6.36: ~builtin_llvm")
+    depends_on("llvm@20.1.0:20.1+polly+clang", when="@6.36: ~builtin_llvm")
 
     depends_on("googletest", when="@6.28.00:", type="test")
 
@@ -462,13 +462,6 @@ class Root(CMakePackage):
         "~builtin_llvm",
         when="@:6.35",
         msg="External LLVM is only supported for ROOT 6.36+ in this spack recipe",
-    )
-    # In order to avoid adding newer versions with incorrect LLVM versions,
-    # newer versions are explicitly added as conflicts as well.
-    conflicts(
-        "~builtin_llvm",
-        when="@6.39:",
-        msg="External LLVM support for ROOT 6.39+ has not been validated",
     )
 
     # GCC 15 support was added in 6.34.04
