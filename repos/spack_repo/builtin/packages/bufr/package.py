@@ -154,6 +154,13 @@ class Bufr(CMakePackage):
     def setup_build_environment(self, env: EnvironmentModifications) -> None:
         env.append_path("LD_LIBRARY_PATH", join_path(self.build_directory, "src"))
 
+        # NumPy f2py uses Meson on Python 3.12 and newer.  Direct its
+        # compiler sanity check away from a possibly noexec /tmp mount.
+        if self.spec.satisfies("+python ^python@3.12:"):
+            tmpdir = join_path(self.stage.path, "tmp")
+            mkdirp(tmpdir)
+            env.set("TMPDIR", tmpdir)
+
     def check(self):
         with working_dir(self.build_directory):
             if self.spec.satisfies("@:12.0 +python"):
