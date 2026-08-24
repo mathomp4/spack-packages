@@ -89,8 +89,20 @@ class Bufr(CMakePackage):
 
     # Need to make the lines shorter at least on some systems
     def patch(self):
-        with when("@:11.7.1"):
+        if self.spec.satisfies("@:11.7.1"):
             filter_file("_lenslmax 120", "_lenslmax 60", "CMakeLists.txt")
+
+        # NumPy f2py uses Meson on Python 3.12 and newer. Direct its
+        # temporary build directory to CMake's already-created binary tree,
+        # rather than the potentially noexec /tmp default.
+        if self.spec.satisfies("+python ^python@3.12:"):
+            filter_file(
+                '-c "${CMAKE_CURRENT_SOURCE_DIR}/_bufrlib.pyf"',
+                '-c "${CMAKE_CURRENT_SOURCE_DIR}/_bufrlib.pyf"\n'
+                '                   --build-dir "${CMAKE_CURRENT_BINARY_DIR}/f2py-build"',
+                "python/CMakeLists.txt",
+                string=True,
+            )
 
     def cmake_args(self):
         args = [
@@ -153,13 +165,6 @@ class Bufr(CMakePackage):
     @on_package_attributes(run_tests=True)
     def setup_build_environment(self, env: EnvironmentModifications) -> None:
         env.append_path("LD_LIBRARY_PATH", join_path(self.build_directory, "src"))
-
-        # NumPy f2py uses Meson on Python 3.12 and newer.  Direct its
-        # compiler sanity check away from a possibly noexec /tmp mount.
-        if self.spec.satisfies("+python ^python@3.12:"):
-            tmpdir = join_path(self.stage.path, "tmp")
-            mkdirp(tmpdir)
-            env.set("TMPDIR", tmpdir)
 
     def check(self):
         with working_dir(self.build_directory):
