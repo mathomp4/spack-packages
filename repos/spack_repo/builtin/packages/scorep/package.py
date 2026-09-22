@@ -16,6 +16,7 @@ class Scorep(AutotoolsPackage):
     homepage = "https://www.vi-hps.org/projects/score-p"
     url = "https://perftools.pages.jsc.fz-juelich.de/cicd/scorep/tags/scorep-7.1/scorep-7.1.tar.gz"
     maintainers("wrwilliams")
+    version("10.1", sha256="39edf6790c4af25679ab46e361091f177d40ad8f8cfff1b4bf81e775fc59f0c1")
     version("10.0", sha256="1e96fe2414bfc9eb868619501a5f62943b554eb1358628610e8e9e01036dacf2")
     version("9.4", sha256="bea58d8c47a7512eca0a5858179377f3f0861f30eafb342a29aa97c05de8f623")
     version("9.3", sha256="5498b31b1d6c04b08a9d408320a7515e884538d248de58b6dd11b48c8f364112")
@@ -54,7 +55,16 @@ class Scorep(AutotoolsPackage):
     variant("hip", default=False, description="Enable ROCm/HIP support", when="@8.0:")
     variant("gcc-plugin", default=True, description="Enable gcc-plugin", when="%gcc")
     variant(
-        "llvm-plugin", default=True, description="Enable LLVM compiler plugin", when="@9.0: ^llvm"
+        "llvm-plugin",
+        default=True,
+        description="Enable LLVM compiler plugin",
+        when="@9.0: %c,cxx=llvm",
+    )
+    variant(
+        "xray",
+        default=False,
+        description="Enable instrumetation via LLVM XRay",
+        when="@10.0: %c,cxx=llvm",
     )
     variant(
         "binutils",
@@ -86,7 +96,7 @@ class Scorep(AutotoolsPackage):
     depends_on("otf2@3.1:", when="@9:")
     depends_on("cubew@4.9:", when="@9:")
     depends_on("cubelib@4.9:", when="@9:")
-    depends_on("opari2@2.0.9", when="@9:")
+    depends_on("opari2@2.0.9:", when="@9:")
 
     # SCOREP 8
     depends_on("binutils", type="link", when="@8:")
@@ -130,6 +140,10 @@ class Scorep(AutotoolsPackage):
     conflicts("platform=darwin")
     # Score-P first has support for ROCm 6.x as of v8.4
     conflicts("hip@6.0:", when="@:8.3+hip")
+
+    # XRay-based instrumentation is mutually exclusive
+    # with the LLVM instrumentation plugin
+    conflicts("+xray", when="+llvm-plugin")
 
     # Utility function: extract the first directory in `root` where
     # we find `libname`. Used to handle CUDA irregular layouts.
@@ -199,6 +213,7 @@ class Scorep(AutotoolsPackage):
         config_args.extend(self.enable_or_disable("gcc-plugin"))
         config_args.extend(self.enable_or_disable("mpi_f08"))
         config_args.extend(self.enable_or_disable("fortran"))
+        config_args.extend(self.enable_or_disable("xray"))
 
         if "~shmem" in spec:
             config_args.append("--without-shmem")
