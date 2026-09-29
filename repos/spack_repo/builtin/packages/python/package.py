@@ -56,19 +56,28 @@ class Python(Package):
 
     license("0BSD")
 
-    version("3.14.3", sha256="d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd")
-    version("3.13.12", sha256="12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996")
-    version("3.12.13", sha256="0816c4761c97ecdb3f50a3924de0a93fd78cb63ee8e6c04201ddfaedca500b0b")
+    version("3.14.5", sha256="9c22bfe9939a6c5418fc74b289a5f1cc41859ae82ac6b163016b5844bd0a86bc")
+    version("3.13.13", sha256="f9cde7b0e2ec8165d7326e2a0f59ea2686ce9d0c617dbbb3d66a7e54d31b74b9")
+    version("3.12.14", sha256="6c6df908d2c3fd24e6d76869e92542abd0f33aec9dfc18df8875f89660286d43")
     version("3.11.15", sha256="f4de1b10bd6c70cbb9fa1cd71fc5038b832747a74ee59d599c69ce4846defb50")
     version("3.10.20", sha256="4ff5fd4c5bab803b935019f3e31d7219cebd6f870d00389cea53b88bbe935d1a")
 
     # Deprecated because newer bug fix patch releases exist
     with default_args(deprecated=True):
         version(
+            "3.14.4", sha256="b4c059d5895f030e7df9663894ce3732bfa1b32cd3ab2883980266a45ce3cb3b"
+        )
+        version(
+            "3.14.3", sha256="d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd"
+        )
+        version(
             "3.14.2", sha256="c609e078adab90e2c6bacb6afafacd5eaf60cd94cf670f1e159565725fcd448d"
         )
         version(
             "3.14.0", sha256="88d2da4eed42fa9a5f42ff58a8bc8988881bd6c547e297e46682c2687638a851"
+        )
+        version(
+            "3.13.12", sha256="12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996"
         )
         version(
             "3.13.11", sha256="03cfedbe06ce21bc44ce09245e091a77f2fee9ec9be5c52069048a181300b202"
@@ -96,6 +105,9 @@ class Python(Package):
         )
         version(
             "3.13.0", sha256="12445c7b3db3126c41190bfdc1c8239c39c719404e844babbd015a1bc3fafcd4"
+        )
+        version(
+            "3.12.13", sha256="0816c4761c97ecdb3f50a3924de0a93fd78cb63ee8e6c04201ddfaedca500b0b"
         )
         version(
             "3.12.12", sha256="487c908ddf4097a1b9ba859f25fe46d22ccaabfb335880faac305ac62bffb79b"
@@ -211,7 +223,7 @@ class Python(Package):
         depends_on("pkgconfig", type="build")
         depends_on("gettext +libxml2", when="+libxml2")
         depends_on("iconv", when="~libxml2")
-        depends_on("gettext ~libxml2", when="~libxml2 ^[virtuals=iconv]gettext")
+        depends_on("gettext ~libxml2", when="~libxml2 ^[virtuals=iconv] libiconv")
 
         # Optional dependencies
         # See detect_modules() in setup.py for details
@@ -273,6 +285,10 @@ class Python(Package):
     # Ensure that distutils chooses correct compiler option for RPATH on fj:
     patch("fj-rpath-3.1.patch", when="@:3.9.7,3.10.0 %fj")
     patch("fj-rpath-3.9.patch", when="@3.9.8:3.9,3.10.1:3.11 %fj")
+
+    # Fix bad prompt in virtual-env in 3.12
+    # https://github.com/python/cpython/issues/132361
+    patch("python-3.12.10+-fix132361.patch", when="@3.12.10:3.12")
 
     # CPython tries to build an Objective-C file with GCC's C frontend
     # https://github.com/spack/spack/pull/16222
@@ -727,6 +743,14 @@ class Python(Package):
             else:
                 options = getattr(self, "configure_flag_args", [])
                 options += ["--prefix={0}".format(prefix)]
+
+                # Python drives Autoconf directly instead of using AutotoolsBuilder.
+                # Keep its macOS availability cache consistent with that builder.
+                deployment_target = os.environ.get("MACOSX_DEPLOYMENT_TARGET")
+                if spec.satisfies("platform=darwin") and deployment_target:
+                    if int(deployment_target.split(".", 1)[0]) < 27:
+                        options += ["ac_cv_func_dup3=no", "ac_cv_func_pipe2=no"]
+
                 options += self.configure_args()
                 configure(*options)
 

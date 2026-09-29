@@ -260,7 +260,8 @@ class Dealii(CMakePackage, CudaPackage):
     depends_on("symengine@0.6:", when="@9.2:+symengine")
     depends_on("tbb", when="+threads")
     # do not require +rol to make concretization of xsdk possible
-    depends_on("trilinos+amesos+aztec+epetra+ifpack+ml+muelu+sacado", when="+trilinos")
+    # Trilinos no longer has epetra from 17 onward
+    depends_on("trilinos+amesos+aztec+epetra+ifpack+ml+muelu+sacado@:16", when="+trilinos")
     depends_on("trilinos~hypre", when="+trilinos+int64")
     for _arch in CudaPackage.cuda_arch_values:
         arch_str = f"+cuda cuda_arch={_arch}"
@@ -557,8 +558,8 @@ class Dealii(CMakePackage, CudaPackage):
                     ]
                 )
             # Make sure we use the same compiler that Trilinos uses
-            if spec.satisfies("+trilinos"):
-                options.extend([self.define("CMAKE_CXX_COMPILER", self["trilinos"].kokkos_cxx)])
+            if spec.satisfies("+trilinos ^trilinos+kokkos ^kokkos+wrapper"):
+                options.extend([self.define("CMAKE_CXX_COMPILER", self["kokkos"].kokkos_cxx)])
 
         # Complex support
         options.append(self.define_from_variant("DEAL_II_WITH_COMPLEX_VALUES", "complex"))
