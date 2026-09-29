@@ -17,7 +17,7 @@ class Gsibec(CMakePackage):
     url = "https://github.com/GEOS-ESM/GSIbec/archive/refs/tags/v1.4.1.tar.gz"
     list_url = "https://github.com/GEOS-ESM/GSIbec/tags"
 
-    maintainers("mathomp4", "danholdaway")
+    maintainers("mathomp4", "eap")
 
     license("Apache-2.0")
 
