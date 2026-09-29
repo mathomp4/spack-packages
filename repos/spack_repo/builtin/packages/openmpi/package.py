@@ -838,7 +838,14 @@ with '-Wl,-commons,use_dylibs' and without
 
     # Open MPI 5.0.8+ has a bug with NAG Fortran
     # https://github.com/open-mpi/ompi/issues/13380
-    conflicts("%fortran=nag", when="@5.0.8:", msg="Open MPI 5.0.8+ has a bug with the NAG compiler")
+    # Fixed in 6.0.0 (https://github.com/open-mpi/ompi/pull/14442) and expected
+    # in 5.0.12 (https://github.com/open-mpi/ompi/pull/14443). Narrow the range
+    # to 5.0.8:5.0.11 once 5.0.12 is released and verified.
+    conflicts(
+        "%fortran=nag",
+        when="@5.0.8:5",
+        msg="Open MPI 5.0.8+ (before 6.0.0) has a bug with the NAG compiler",
+    )
 
     filter_compiler_wrappers("openmpi/*-wrapper-data*", relative_root="share")
 
