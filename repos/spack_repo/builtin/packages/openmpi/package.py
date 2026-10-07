@@ -1024,12 +1024,14 @@ with '-Wl,-commons,use_dylibs' and without
         return find_libraries(libraries, root=self.prefix, shared=True, recursive=True)
 
     def setup_build_environment(self, env: EnvironmentModifications) -> None:
-        # We need to unset MACOSX_DEPLOYMENT_TARGET on macOS if building with NAG
-        # Fortran or LLVM Flang
-        if self.spec.satisfies("platform=darwin") and (
-            self.spec.satisfies("%fortran=nag") or self.spec.satisfies("%fortran=clang")
-        ):
+        # We need to unset MACOSX_DEPLOYMENT_TARGET on macOS if building with NAG Fortran
+        if self.spec.satisfies("platform=darwin") and self.spec.satisfies("%fortran=nag"):
             env.unset("MACOSX_DEPLOYMENT_TARGET")
+            # The Autotools builder only rejects pipe2/dup3 when
+            # MACOSX_DEPLOYMENT_TARGET is set (weak imports with the macOS 27 SDK),
+            # so do it explicitly here.
+            env.set("ac_cv_func_pipe2", "no")
+            env.set("ac_cv_func_dup3", "no")
 
     @run_after("configure")
     def fix_darwin_flang_libtool(self):
